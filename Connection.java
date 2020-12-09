@@ -1,5 +1,7 @@
 import java.io.*;
 import java.net.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -201,7 +203,7 @@ class Connection extends Thread
         return h;
     }
 
-    public String SHAsum(byte[] convertme) throwsNoSuchAlgorithmException{
+    public String SHAsum(byte[] convertme) throws NoSuchAlgorithmException{
         MessageDigest md = MessageDigest.getInstance("SHA-1");
         return byteArray2Hex(md.digest(convertme));
     }
