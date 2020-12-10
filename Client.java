@@ -309,7 +309,8 @@ class PacketHandler extends Thread
 	            }
 	            
 	        }
-            
+            this.ptpInputStream.close();
+            this.ptpOutputStream.close();
 	        ptpSocket.close();
     	} catch(Exception e) {
     		e.printStackTrace();
