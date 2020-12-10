@@ -1,8 +1,5 @@
 CLIENT SIDE
 
-1) Initialization. Same as Project 2.
-2) Connect to the server. Same as Project 2.
-3) Report to the server. Same as Project 2.
 4) Open its own listening port. Client A opens its listening port by calling the accept() function; it needs to do this because other clients may want to connect to it and download file from it.
 5) Quit the program. Same as Project 2.
 6) The while loop. Client A enters an infinite loop:
@@ -25,12 +22,8 @@ CLIENT SIDE
  
 
 SERVER SIDE
-1) Initialization. Same as Project 2.
-2) Accept requests. Same Project 2.
-3) Answer client queries. Same as Project 2.
 4) Update client info. After client A has successfully received a file, it will send a message to the server saying that “I have downloaded file x.” The sever will update the record for client A, i.e., add a 1 to its file vector. If a client leaves, the sever deletes its info.
-5) Respond to user command. Same as Project 2.
-6) Respond to client quit message. Same as Project 2.
+
  
 Assumptions
 There are a few assumptions that we make in this project.

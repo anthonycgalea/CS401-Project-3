@@ -17,6 +17,8 @@ public class Client {
      int peerID;
      int peer_listen_port;
      char FILE_VECTOR[];
+     ArrayList<Connection> connectionList;
+     ServerSocket listener;
     // To do , create each peers own ServerSocket listener to monitor for incoming peer requests. start a listener thread in main();
     // I used the ServerSocketHandler to handle both client-server and peer-to-peer listeners. You can use a separate class. 90% of the code is repeated.
     // For the individual connections, again you can re-use the Connection class, and add some event handlers to process event codes that will be used to distibguis betwwen peer-to-peer or cleint-server communications, or create a separate class called peerConnection. It is completely your choice.
