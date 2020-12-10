@@ -3,7 +3,6 @@ import java.net.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
-import java.util.concurrent.*;
 
 class Connection extends Thread
 {
@@ -105,20 +104,34 @@ class Connection extends Thread
             clientRegister(p);break;
             
             case 1: // client is requesting a file 
-            clientReqFile(p);break;
+            clientReqFile(p);
+            break;
 
             case 5:
-            clientWantsToQuit(p);break;
+            clientWantsToQuit(p);
+            break;
             
-            case 3:
-            clientGotFile(p);break; // To Do
+            case 3: //client got file
+            	if (p.gotFile) {
+            		clientGotFile(p);
+            	} else {
+            		clientReqFileFromPeer(p);
+            	}
+            break; 
             
-           // case 4: //if implementing peer-to-peer connections in the same class
-           //  clientReqFileFromPeer(p);break;
+            case 4: //if implementing peer-to-peer connections in the same class
+            clientReqFileFromPeer(p);break;
         };
     }
 
-    public void clientRegister(Packet p)
+    private void clientReqFileFromPeer(Packet p) {
+		// TODO Auto-generated method stub
+		//int index = p.req_file_index;
+		//Implement
+		
+	}
+
+	public void clientRegister(Packet p)
     {
         FILE_VECTOR=p.FILE_VECTOR;
         peer_listen_port=p.peer_listen_port;
@@ -175,7 +188,11 @@ class Connection extends Thread
     
      public void clientGotFile(Packet p)
     {
-       // To implement
+    	 //(Anthony Galea)
+    	 this.FILE_VECTOR[p.req_file_index] = '1';
+    	 if (p.isPtp) {
+    		 clientWantsToQuit(p);
+    	 }
     }
 
     public byte[] generate_file(int findex, int length)

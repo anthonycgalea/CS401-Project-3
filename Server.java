@@ -1,8 +1,6 @@
 
-import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.util.concurrent.*;
 
 public class Server {
     
@@ -70,6 +68,7 @@ public class Server {
 
         }
         //will quit on user input
+        input.close();
         
     }
 

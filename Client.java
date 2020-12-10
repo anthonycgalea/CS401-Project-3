@@ -1,11 +1,7 @@
 
 import java.io.*;
 import java.net.*;
-import java.util.*;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.*;
-import java.lang.*; 
+import java.util.*; 
 
 public class Client {
 
@@ -58,6 +54,9 @@ public class Client {
             Thread r = new PacketHandler(client);
             r.start();
             
+            Thread clientSocketHandler = new ClientSocketHandler(client);
+            clientSocketHandler.start();
+            
             
             while (runClient){
                 
@@ -88,6 +87,7 @@ public class Client {
         catch(Exception e){ 
             e.printStackTrace(); 
         }
+        input.close();
 
     }
 
@@ -164,6 +164,7 @@ public class Client {
                     case "FILE_VECTOR": FILE_VECTOR = opt[1].toCharArray();break;
                 }
             }
+            scanner.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -203,6 +204,8 @@ public class Client {
 class PacketHandler extends Thread
 {
     Client client;
+    private ObjectOutputStream ptpOutputStream;
+    private ObjectInputStream ptpInputStream;
 
     public PacketHandler(Client client)
     {
@@ -253,19 +256,137 @@ class PacketHandler extends Thread
     void PeerToPeerHandler(InetAddress remotePeerIP, int remotePortNum, int remotePeerID, int findex)
     {
         // To implement.
-        
-        // connect to peer
-        // while file not received correctly
-            // request_file_from_peer
-            // receive_file_from_peer
-            // verify file_hash
-            // if correct, send positve ack, break
-            // if incorrect, send negative ack, loop back
+    	try {
+    		// connect to peer (Anthony Galea)
+	        Socket ptpSocket = new Socket(remotePeerIP, remotePortNum); 
+	        this.ptpOutputStream = new ObjectOutputStream(ptpSocket.getOutputStream());
+	        this.ptpInputStream = new ObjectInputStream(ptpSocket.getInputStream());
+            Packet p = new Packet();
+            p.event_type=0;
+            p.sender=client.peerID;
+            p.peer_listen_port=client.peer_listen_port;
+            p.FILE_VECTOR = client.FILE_VECTOR;
+
+           send_packet_to_peer(p);
+
+            System.out.println("Packet Sent");
+	        System.out.println("Connected to Peer ..." +client.s); 
+	        
+	        boolean fileReceived = false;
+	        // while file not received correctly (Anthony Galea)
+	        while (!fileReceived) {
+	        	// request_file_from_peer (Anthony Galea)
+	            Packet requestFile = new Packet();
+	            requestFile.event_type=4;
+	            requestFile.sender=client.peerID;
+	            requestFile.peer_listen_port=client.peer_listen_port;
+	            requestFile.req_file_index=findex;
+	            send_packet_to_peer(requestFile);
+	            // receive_file_from_peer
+	            p = (Packet) this.ptpInputStream.readObject();
+	            boolean correct = false;
+	            //TODO:add checking here
+	            // verify file_hash
+	            
+	            
+	            
+	            // if correct, send positve ack, break (Anthony Galea)
+	            if (correct) {
+	            	Packet posAck = new Packet();
+		            posAck.event_type=3;
+		            posAck.gotFile = true;
+		            posAck.sender=client.peerID;
+		            posAck.req_file_index=findex;
+		            posAck.isPtp = true;
+		            send_packet_to_peer(posAck);
+		            break;
+	            }else { // if incorrect, send negative ack, loop back (Anthony Galea)
+	            	Packet negAck = new Packet();
+		            negAck.event_type=3;
+		            negAck.gotFile = false;
+		            negAck.req_file_index=findex;
+		            send_packet_to_peer(negAck);
+	            }
+	            
+	        }
             
-        //once, file has been received, send update file request to server.
+	        ptpSocket.close();
+    	} catch(Exception e) {
+    		e.printStackTrace();
+    	}
+    	
+        //once, file has been received, send update file request to server (Anthony Galea).
+        Packet p = new Packet();
+        p.event_type=3;
+        p.sender=client.peerID;
+        p.req_file_index = findex;
+        p.isPtp = false;
+        client.send_packet_to_server(p);
         
+        
+    }
+    
+    //Anthony Galea - modified send_packet_to_server so that it sends to peer rather than server
+    void send_packet_to_peer(Packet p)
+    {
+        try
+        { 
+            this.ptpOutputStream.writeObject(p);
+        }
+        catch(Exception e){
+            System.out.println ("Could not send packet! ");
+        }
     }
 
 
+
+}
+
+//Duplicated ServerSocketHandler so that it can accept and handle PTP requests (Anthony Galea)
+class ClientSocketHandler extends Thread
+{
+
+    Client c;
+    ArrayList<Connection> ptpConnectionList;
+
+    public ClientSocketHandler(Client c){
+        this.c=c;
+        this.ptpConnectionList=c.connectionList;
+    }
+
+    public void run(){
+        Socket clientSocket;
+        while (true){
+            clientSocket = null;
+            try{
+
+                clientSocket=c.listener.accept();
+                System.out.println("A new peer is connecting.. : " + clientSocket);
+                System.out.println("Port : " + clientSocket.getPort());
+                System.out.println("IP : " + clientSocket.getInetAddress().toString());
+                Connection conn = new Connection(clientSocket, c.connectionList);
+                //ptpConnectionList.add(conn);
+                conn.start();
+
+            }
+            catch (SocketException e){  
+                System.out.println("Shutting down peer to peer connections....");
+                // send a message to all clients that I want to quit.
+                for (Connection c: this.ptpConnectionList)
+                {
+                    c.send_quit_message();
+                    c.closeConnection();
+                }
+                this.ptpConnectionList.clear();
+                break;
+
+            }
+            catch (IOException e){  
+                e.printStackTrace(); 
+            }
+
+
+        }
+    }
 
 }

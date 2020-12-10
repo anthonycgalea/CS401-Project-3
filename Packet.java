@@ -16,9 +16,10 @@ class Packet implements Serializable{
     int peer_listen_port;
     char FILE_VECTOR[];
     int data_block_size=1000; //each packet can carry 1000 bytes of data
-    byte DATA_BLOCK[]; //byte array that holds thje file.
+    byte DATA_BLOCK[]; //byte array that holds the file.
     String fileHash; // contains the hash of the file, will be used by server when client requests file.
     boolean gotFile; // used for ACKs, true for positive , false for negative
+    boolean isPtp;
 
     public Packet()
     {
