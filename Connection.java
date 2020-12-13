@@ -110,13 +110,18 @@ class Connection extends Thread
             case 5:
             clientWantsToQuit(p);
             break;
-            
-            case 3: //client got file
-            	if (p.gotFile) {
-            		clientGotFile(p);
-            	} else {
-            		clientReqFileFromPeer(p);
-            	}
+
+            case 3: //client got file (Josh Bacon)
+                if(p.isPtp) { // Is from p2p client
+                    if (p.gotFile) {
+                        clientGotFile(p);
+                    } else {
+                        clientReqFileFromPeer(p);
+                    }
+                }
+                else { // Is Server
+                    updateClientFileVector(p);
+                }
             break; 
             
             case 4: //if implementing peer-to-peer connections in the same class
@@ -124,12 +129,21 @@ class Connection extends Thread
         };
     }
 
+    // Implement file sending (Josh Bacon)
     private void clientReqFileFromPeer(Packet p) {
-		// TODO Auto-generated method stub
-		//int index = p.req_file_index;
-		//Implement
-		
+		int index = p.req_file_index;
+        Packet responsePacket = new Packet();
+        responsePacket.event_type = 7;
+        responsePacket.req_file_index = index;
+        responsePacket.DATA_BLOCK = generate_file(index, 20000);
+        send_packet_to_client(responsePacket);
 	}
+
+	// Refresh the file vector of the client that received a file (Josh Bacon)
+	private void updateClientFileVector(Packet p) {
+        // FILE_VECTOR = p.FILE_VECTOR;
+        FILE_VECTOR[p.req_file_index] = '1';
+    }
 
 	public void clientRegister(Packet p)
     {
@@ -159,6 +173,8 @@ class Connection extends Thread
                 
             }
         }
+         // Send the file hash along so it can be compared to make sure proper data was sent (Josh Bacon)
+        packet.fileHash = find_file_hash(generate_file(findex, 20000));
         send_packet_to_client(packet);
 
         
@@ -195,7 +211,7 @@ class Connection extends Thread
     	 }
     }
 
-    public byte[] generate_file(int findex, int length)
+    public static byte[] generate_file(int findex, int length)
     {
         byte[] buf= new byte[length];
         Random r = new Random();
@@ -208,7 +224,7 @@ class Connection extends Thread
         return buf;
     }
 
-    public String find_file_hash(byte [] buf)
+    public static String find_file_hash(byte [] buf)
     {
         String h = "";
         try {
@@ -220,7 +236,7 @@ class Connection extends Thread
         return h;
     }
 
-    public String SHAsum(byte[] convertme) throws NoSuchAlgorithmException{
+    public static String SHAsum(byte[] convertme) throws NoSuchAlgorithmException{
         MessageDigest md = MessageDigest.getInstance("SHA-1");
         return byteArray2Hex(md.digest(convertme));
     }

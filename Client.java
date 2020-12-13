@@ -241,7 +241,7 @@ class PacketHandler extends Thread
             System.out.println("Server says that no client has file "+p.req_file_index);
         else{
             System.out.println("Server says that peer "+p.peerID+" on listening port "+p.peer_listen_port+" has file "+p.req_file_index);
-            PeerToPeerHandler(p.peerIP,p.peer_listen_port,p.req_file_index,p.req_file_index); // TO DO
+            PeerToPeerHandler(p.peerIP,p.peer_listen_port,p.req_file_index,p.req_file_index,p.fileHash); // TO DO
             }
         break;
 
@@ -254,7 +254,7 @@ class PacketHandler extends Thread
 
     }
     
-    void PeerToPeerHandler(InetAddress remotePeerIP, int remotePortNum, int remotePeerID, int findex)
+    void PeerToPeerHandler(InetAddress remotePeerIP, int remotePortNum, int remotePeerID, int findex, String fileHash)
     {
         // To implement.
     	try {
@@ -285,10 +285,11 @@ class PacketHandler extends Thread
 	            send_packet_to_peer(requestFile);
 	            // receive_file_from_peer
 	            p = (Packet) this.ptpInputStream.readObject();
-	            boolean correct = false;
-	            //TODO:add checking here
-	            // verify file_hash
-	            
+	            // verify file hash (Josh Bacon)
+	            String hash = Connection.find_file_hash(p.DATA_BLOCK);
+	            System.out.println("Received file: " + hash);
+	            System.out.println("Expected file: " + fileHash);
+	            boolean correct = hash.equals(fileHash);
 	            // if correct, send positve ack, break (Anthony Galea)
 	            if (correct) {
 	            	Packet posAck = new Packet();
@@ -322,6 +323,7 @@ class PacketHandler extends Thread
         p.sender=client.peerID;
         p.req_file_index = findex;
         p.isPtp = false;
+        p.FILE_VECTOR = client.FILE_VECTOR;
         client.send_packet_to_server(p);
         
         
