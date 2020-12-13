@@ -22,6 +22,7 @@ public class Client {
     {
         
         Client client = new Client();
+        client.connectionList = new ArrayList<Connection>();
         boolean runClient=true;
         Scanner input = new Scanner(System.in);
         if (args.length==0 || args.length % 2 == 1){
@@ -53,7 +54,7 @@ public class Client {
             
             Thread r = new PacketHandler(client);
             r.start();
-            
+            client.listener = new ServerSocket(client.peer_listen_port); 
             Thread clientSocketHandler = new ClientSocketHandler(client);
             clientSocketHandler.start();
             
@@ -288,8 +289,6 @@ class PacketHandler extends Thread
 	            //TODO:add checking here
 	            // verify file_hash
 	            
-	            
-	            
 	            // if correct, send positve ack, break (Anthony Galea)
 	            if (correct) {
 	            	Packet posAck = new Packet();
@@ -317,6 +316,7 @@ class PacketHandler extends Thread
     	}
     	
         //once, file has been received, send update file request to server (Anthony Galea).
+    	client.FILE_VECTOR[findex] = '1';
         Packet p = new Packet();
         p.event_type=3;
         p.sender=client.peerID;
@@ -365,7 +365,7 @@ class ClientSocketHandler extends Thread
                 System.out.println("A new peer is connecting.. : " + clientSocket);
                 System.out.println("Port : " + clientSocket.getPort());
                 System.out.println("IP : " + clientSocket.getInetAddress().toString());
-                Connection conn = new Connection(clientSocket, c.connectionList);
+                Connection conn = new Connection(clientSocket, this.ptpConnectionList);
                 //ptpConnectionList.add(conn);
                 conn.start();
 
